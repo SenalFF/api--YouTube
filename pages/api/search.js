@@ -1,22 +1,28 @@
-import ytdl from "ytdl-core";
 import ytSearch from "yt-search";
-import normalizeLink from "../../utils/normalizeLink";
 
 export default async function handler(req, res) {
-  const query = req.query.q;
-  if (!query) return res.status(400).json({ error: "Missing search query" });
+  const { q } = req.query;
+  if (!q) return res.status(400).json({ error: "Missing query" });
 
-  const normalized = normalizeLink(query);
+  try {
+    const result = await ytSearch(q);
+    if (!result.videos.length) return res.status(404).json({ error: "No results found" });
+    const video = result.videos[0];
 
-  if (normalized.length === 11) {
-    const info = await ytdl.getInfo(normalized);
-    return res.json({ video: info.videoDetails });
+    // Return only required fields
+    res.status(200).json({
+      videoId: video.videoId,
+      title: video.title,
+      description: video.description,
+      timestamp: video.timestamp,
+      seconds: video.seconds,
+      views: video.views,
+      ago: video.ago,
+      author: video.author.name,
+      image: video.image,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Search failed" });
   }
-
-  const result = await ytSearch(normalized);
-  const video = result.videos.length ? result.videos[0] : null;
-
-  if (!video) return res.status(404).json({ error: "No video found" });
-
-  return res.json({ video });
-}
+      }
