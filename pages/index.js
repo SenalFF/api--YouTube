@@ -1,243 +1,122 @@
-import { useEffect, useState } from "react";
-import ytSearch from "yt-search";
+import { useState } from "react";
+import axios from "axios";
 
 export default function Home() {
   const [query, setQuery] = useState("");
   const [video, setVideo] = useState(null);
-  const [error, setError] = useState("");
-  const [darkMode, setDarkMode] = useState(false);
-  const [downloading, setDownloading] = useState(false);
-  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [theme, setTheme] = useState("dark");
+  const [progress, setProgress] = useState(null);
 
-  const searchYouTube = async () => {
-    if (!query.trim()) return setError("Please enter a search term or link.");
-    setError("");
-    setVideo(null);
-    setDownloading(false);
-    setDownloadProgress(0);
+  const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
 
+  const searchVideo = async () => {
     try {
-      const res = await ytSearch(query);
-      if (!res.videos.length) return setError("No results found.");
-      setVideo(res.videos[0]);
-    } catch (err) {
-      console.error(err);
-      setError("Search failed.");
+      const res = await axios.get(`/api/search?q=${query}`);
+      setVideo(res.data);
+    } catch (error) {
+      alert("Search failed");
     }
   };
 
-  const handleDownload = async (type) => {
-    if (!video || !video.videoId) return;
-
-    setDownloading(true);
-    setDownloadProgress(0);
-
-    // We'll simulate progress bar here because direct download progress from new tab is not accessible.
-    // In real implementation, server API can send progress updates via websocket or SSE.
-
-    const url = `/api/download/${type}?id=${video.videoId}`;
-
-    // Open download in new tab
-    window.open(url, "_blank");
-
-    // Fake progress increment
-    const interval = setInterval(() => {
-      setDownloadProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setDownloading(false);
-          return 100;
-        }
-        return prev + 10;
-      });
-    }, 300);
-  };
-
-  const toggleTheme = () => setDarkMode(!darkMode);
-
-  const estimateFileSize = (durationSec, isAudio) => {
-    // kbps: audio ~128 kbps, video ~800 kbps
-    const kbps = isAudio ? 128 : 800;
-    const bytes = (durationSec * kbps * 1000) / 8;
-    const mb = bytes / 1024 / 1024;
-    return `${mb.toFixed(2)} MB`;
-  };
-
-  // Handle Enter key to auto search
   const handleKeyPress = (e) => {
-    if (e.key === "Enter") searchYouTube();
+    if (e.key === "Enter") {
+      searchVideo();
+    }
+  };
+
+  const downloadFile = async (format) => {
+    try {
+      setProgress(0);
+      const res = await axios.get(`/api/download?url=${video.url}&type=${format}`, {
+        responseType: "blob",
+        onDownloadProgress: (progressEvent) => {
+          const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setProgress(percent);
+        },
+      });
+
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `${video.title}.${format}`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setProgress(null);
+    } catch (error) {
+      alert("Download failed");
+      setProgress(null);
+    }
   };
 
   return (
-    <div
-      style={{
-        padding: "2rem",
-        fontFamily: "Arial, sans-serif",
-        backgroundColor: darkMode ? "#121212" : "#f0f0f0",
-        color: darkMode ? "#ffffff" : "#000000",
-        minHeight: "100vh",
-        maxWidth: 800,
-        margin: "0 auto",
-      }}
-    >
-      <h1 style={{ textAlign: "center" }}>YouTube Downloader</h1>
+    <div className={`${theme === "dark" ? "bg-black text-white" : "bg-white text-black"} min-h-screen p-4`}>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">🎵 YouTube Downloader</h1>
+        <button
+          onClick={toggleTheme}
+          className="px-4 py-1 rounded bg-gray-600 text-white hover:bg-gray-800"
+        >
+          {theme === "dark" ? "☀️ Light" : "🌙 Dark"}
+        </button>
+      </div>
 
-      <button
-        onClick={toggleTheme}
-        style={{
-          display: "block",
-          margin: "1rem auto",
-          padding: "6px 12px",
-          borderRadius: "5px",
-          backgroundColor: darkMode ? "#ffffff" : "#000000",
-          color: darkMode ? "#000000" : "#ffffff",
-          border: "none",
-          cursor: "pointer",
-        }}
-      >
-        Toggle {darkMode ? "Light" : "Dark"} Mode
-      </button>
-
-      <input
-        type="text"
-        placeholder="Search or paste YouTube link"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        onKeyDown={handleKeyPress}
-        style={{
-          padding: "10px",
-          width: "100%",
-          fontSize: "16px",
-          marginBottom: "10px",
-          backgroundColor: darkMode ? "#1f1f1f" : "#ffffff",
-          color: darkMode ? "#fff" : "#000",
-          border: "1px solid #ccc",
-          borderRadius: 5,
-        }}
-      />
-
-      <button
-        onClick={searchYouTube}
-        style={{
-          padding: "10px 20px",
-          fontSize: "16px",
-          backgroundColor: "#28a745",
-          color: "white",
-          border: "none",
-          borderRadius: "5px",
-          cursor: "pointer",
-          width: "100%",
-          marginBottom: "20px",
-        }}
-      >
-        Search
-      </button>
-
-      {error && (
-        <p style={{ color: "red", marginTop: "10px", textAlign: "center" }}>
-          {error}
-        </p>
-      )}
+      <div className="flex flex-col sm:flex-row gap-2 mb-6">
+        <input
+          type="text"
+          placeholder="Search YouTube video..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyPress={handleKeyPress}
+          className="flex-1 p-2 border rounded text-black"
+        />
+        <button onClick={searchVideo} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-800">
+          Search
+        </button>
+      </div>
 
       {video && (
-        <div
-          style={{
-            marginTop: "2rem",
-            backgroundColor: darkMode ? "#1e1e1e" : "#fff",
-            padding: 20,
-            borderRadius: 10,
-            boxShadow: darkMode
-              ? "0 0 10px #222"
-              : "0 0 10px rgba(0,0,0,0.1)",
-          }}
-        >
-          <h2 style={{ textAlign: "center", marginBottom: 10 }}>
-            {video.title}
-          </h2>
+        <div className="bg-gray-900 text-white p-4 rounded-lg shadow-md">
+          <h2 className="text-xl font-semibold mb-2">{video.title}</h2>
+          <div className="mb-4">
+            <iframe
+              width="100%"
+              height="250"
+              src={`https://www.youtube.com/embed/${video.videoId}`}
+              title="YouTube video"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="rounded"
+            ></iframe>
+          </div>
 
-          <iframe
-            width="100%"
-            height="360"
-            src={`https://www.youtube.com/embed/${video.videoId}`}
-            title={video.title}
-            frameBorder="0"
-            allowFullScreen
-            style={{ borderRadius: "10px", marginBottom: "10px" }}
-          ></iframe>
+          <div className="mb-2">📅 Uploaded: {video.uploadedAt}</div>
+          <div className="mb-2">⏱ Duration: {video.duration}</div>
+          <div className="mb-2">👀 Views: {video.views}</div>
+          <div className="mb-2">👍 Likes: {video.likes}</div>
+          <div className="mb-2">💾 Estimated Size: MP3 ~ {video.mp3Size}, MP4 ~ {video.mp4Size}</div>
 
-          <p>
-            <strong>Duration:</strong> {video.timestamp}
-          </p>
-          <p>
-            <strong>Views:</strong> {video.views.toLocaleString()}
-          </p>
-          <p>
-            <strong>Likes / Uploaded:</strong> {video.ago}
-          </p>
-          <p>
-            <strong>Estimated MP3 Size:</strong>{" "}
-            {estimateFileSize(video.seconds, true)}
-          </p>
-          <p>
-            <strong>Estimated MP4 Size:</strong>{" "}
-            {estimateFileSize(video.seconds, false)}
-          </p>
-
-          <div style={{ marginTop: "10px", textAlign: "center" }}>
-            <button
-              onClick={() => handleDownload("mp3")}
-              disabled={downloading}
-              style={{
-                padding: "10px 15px",
-                marginRight: "10px",
-                backgroundColor: "#007bff",
-                color: "white",
-                border: "none",
-                borderRadius: "5px",
-                cursor: downloading ? "not-allowed" : "pointer",
-              }}
-            >
-              Download MP3
+          <div className="flex flex-wrap gap-4 mt-4">
+            <button onClick={() => downloadFile("mp3")} className="bg-green-600 px-4 py-2 rounded hover:bg-green-800">
+              ⬇️ Download MP3
             </button>
-            <button
-              onClick={() => handleDownload("mp4")}
-              disabled={downloading}
-              style={{
-                padding: "10px 15px",
-                backgroundColor: "#ffc107",
-                color: "#000",
-                border: "none",
-                borderRadius: "5px",
-                cursor: downloading ? "not-allowed" : "pointer",
-              }}
-            >
-              Download MP4
+            <button onClick={() => downloadFile("mp4")} className="bg-red-600 px-4 py-2 rounded hover:bg-red-800">
+              ⬇️ Download MP4
             </button>
           </div>
 
-          {downloading && (
-            <div style={{ marginTop: 20 }}>
-              <progress
-                value={downloadProgress}
-                max="100"
-                style={{ width: "100%" }}
-              />
-              <p style={{ textAlign: "center" }}>{downloadProgress}%</p>
+          {progress !== null && (
+            <div className="w-full bg-gray-700 rounded-full mt-4">
+              <div
+                className="bg-green-400 h-4 rounded-full"
+                style={{ width: `${progress}%` }}
+              ></div>
+              <p className="text-sm mt-1">Download Progress: {progress}%</p>
             </div>
           )}
         </div>
       )}
-
-      <footer
-        style={{
-          marginTop: 40,
-          fontSize: 12,
-          color: darkMode ? "#aaa" : "#555",
-          textAlign: "center",
-        }}
-      >
-        © 2025 Mr Senal's YouTube Downloader
-      </footer>
     </div>
   );
 }
