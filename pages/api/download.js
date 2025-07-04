@@ -2,10 +2,7 @@ import ytdl from "ytdl-core";
 
 export default async function handler(req, res) {
   const { url, type } = req.query;
-
-  if (!url || !type) {
-    return res.status(400).json({ error: "Missing url or type" });
-  }
+  if (!url || !type) return res.status(400).json({ error: "Missing url or type" });
 
   try {
     const info = await ytdl.getInfo(url);
@@ -14,15 +11,12 @@ export default async function handler(req, res) {
       filter: type === "mp3" ? "audioonly" : "audioandvideo",
     });
 
-    // ✅ Return a direct downloadable URL to the client
     return res.status(200).json({
       downloadUrl: format.url,
       title: info.videoDetails.title,
-      type,
     });
-
   } catch (err) {
     console.error("Download error:", err);
-    return res.status(500).json({ error: "Failed to fetch download URL" });
+    return res.status(500).json({ error: "Failed to get download URL" });
   }
 }
