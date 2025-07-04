@@ -21,13 +21,8 @@ export default function Home() {
   const handleDownload = async (type) => {
     try {
       const res = await axios.get(`/api/download?url=${video.url}&type=${type}`);
-      const link = document.createElement("a");
-      link.href = res.data.downloadUrl;
-      link.download = `${video.title}.${type}`;
-      link.target = "_blank";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      const win = window.open(res.data.downloadUrl, "_blank");
+      if (!win) alert("Please allow popups");
     } catch (err) {
       alert("Download failed");
     }
