@@ -44,7 +44,7 @@ export default function Home() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && search()}
-            placeholder="Paste link or search YouTube"
+            placeholder="Paste YouTube link or type a search"
             className="flex-1 p-2 text-black rounded"
           />
           <button
@@ -67,7 +67,7 @@ export default function Home() {
             <p>👁️ {video.views} | 👍 {video.likes} | ⏱ {video.duration} | 📅 {video.uploadedAt}</p>
 
             <div className="text-sm text-gray-400">
-              Estimated: MP3 ~ {video.mp3Size}, MP4 ~ {video.mp4Size}
+              Estimated size: 🎵 MP3 ~ {video.mp3Size}, 🎥 MP4 ~ {video.mp4Size}
             </div>
 
             <div className="flex gap-4">
