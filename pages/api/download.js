@@ -2,10 +2,7 @@ import ytdl from "ytdl-core";
 
 export default async function handler(req, res) {
   const { url, type } = req.query;
-
-  if (!url || !type) {
-    return res.status(400).json({ error: "Missing url or type" });
-  }
+  if (!url || !type) return res.status(400).json({ error: "Missing url or type" });
 
   try {
     const info = await ytdl.getInfo(url);
@@ -17,7 +14,7 @@ export default async function handler(req, res) {
     });
 
     if (!format || !format.url) {
-      return res.status(500).json({ error: "No downloadable format found." });
+      return res.status(500).json({ error: "No downloadable format found" });
     }
 
     res.status(200).json({
@@ -29,4 +26,4 @@ export default async function handler(req, res) {
     console.error("Download error:", err);
     res.status(500).json({ error: "Failed to get download URL" });
   }
-}
+                          }
