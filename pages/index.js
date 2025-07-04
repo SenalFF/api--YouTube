@@ -37,7 +37,6 @@ export default function Home() {
   return (
     <div className={`${dark ? "bg-gray-900 text-white" : "bg-white text-black"} min-h-screen`}>
       <div className="max-w-2xl mx-auto px-4 py-6">
-        {/* Header / Theme */}
         <div className="flex justify-between mb-4">
           <h1 className="text-2xl font-bold">📥 YouTube Downloader</h1>
           <button onClick={toggleTheme} className="px-3 py-1 border rounded">
@@ -45,7 +44,6 @@ export default function Home() {
           </button>
         </div>
 
-        {/* Search bar */}
         <div className="flex gap-2 mb-4">
           <input
             type="text"
@@ -64,7 +62,6 @@ export default function Home() {
           </button>
         </div>
 
-        {/* Video preview & info */}
         {video && (
           <div className="mt-6 space-y-3">
             <iframe
@@ -80,7 +77,6 @@ export default function Home() {
               Estimated size: 🎵 MP3 ≈ {video.mp3Size} &nbsp;•&nbsp; 🎥 MP4 ≈ {video.mp4Size}
             </p>
 
-            {/* Download buttons */}
             <div className="flex gap-4">
               <button
                 onClick={() => handleDownload("mp3")}
