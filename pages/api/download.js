@@ -1,4 +1,4 @@
-import ytdl from "ytdl-core";
+import ruhend from "ruhend-scraper";
 
 export default async function handler(req, res) {
   const { url, type } = req.query;
@@ -8,30 +8,25 @@ export default async function handler(req, res) {
   }
 
   try {
-    const info = await ytdl.getInfo(url);
+    const result = await ruhend.youtube(url);
 
-    const formats = ytdl.filterFormats(
-      info.formats,
-      type === "mp3" ? "audioonly" : "videoandaudio"
-    );
-
-    const format =
-      formats.find((f) => f && f.url && !f.hasVideoOnly && !f.hasAudioOnly) ||
-      formats.find((f) => f && f.url);
-
-    if (!format || !format.url) {
-      return res.status(500).json({ error: "No downloadable format found" });
+    if (!result || !result.title) {
+      return res.status(500).json({ error: "Failed to fetch video details" });
     }
 
-    const title = info.videoDetails.title.replace(/[^\w\s]/gi, "").substring(0, 50);
+    const download = type === "mp3" ? result.mp3 : result.mp4;
+
+    if (!download || !download.url) {
+      return res.status(500).json({ error: "Download link not found" });
+    }
 
     return res.status(200).json({
-      downloadUrl: format.url,
-      title,
+      title: result.title,
+      downloadUrl: download.url,
       type,
     });
   } catch (err) {
-    console.error("Download error:", err.message || err);
+    console.error("Ruhend error:", err.message);
     return res.status(500).json({ error: "Failed to get download URL" });
   }
 }
