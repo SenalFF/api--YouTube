@@ -1,23 +1,24 @@
 {
-  "name": "yt-downloader",
-  "version": "1.0.0",
+  "name": "@kelvdra/scraper",
+  "version": "1.0.27",
+  "description": "A simple scraper by kelvdra, rebuilt with Next.js.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start"
   },
   "dependencies": {
-    "axios": "1.10.0",
-    "body-parser": "2.2.0",
-    "cheerio": "1.1.0",
-    "next": "15.3.4",
-    "react": "19.1.0",
-    "tailwindcss": "^4.1.11",
-    "ytdl-core": "4.11.5",
-    "ws": "^8.18.3",
-    "cors": "^2.8.5",
-    "ruhend-scraper": "^9.0.1",
-    "progress-stream": "^2.0.0",
-    "yt-search": "2.13.1"
+    "axios": "^1.10.0",
+    "cheerio": "1.0.0-rc.12",
+    "form-data": "^4.0.0",
+    "g-i-s": "^2.1.7",
+    "mime-types": "^2.1.35",
+    "next": "^14.2.3",
+    "node-fetch": "^2.6.1",
+    "qs": "^6.14.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "yt-search": "^2.0.0",
+    "ytdl-core": "^4.11.4"
   }
 }
